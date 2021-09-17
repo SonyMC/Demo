@@ -1,6 +1,6 @@
 (1) use version 3 to demo non-cloud demo by enabling rabbit specs in application.properties 
 (2) use version 3 to demo-compose by commenting out rabbit specs in application.properties 
-(3) For dokcer image creation , docker file is present in limits-service-v3
+(3) For docker image creation , docker file is present in sample-service-limits ( Eclipse folder:limits-service-v2-sample)
 (4) use version kubenetes to demo k8s
 
 
