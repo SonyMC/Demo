@@ -3,7 +3,7 @@ Jenkins:
 
 Note: Though the script works fine, there is a permission issue when it tries to connect with local Docker image for Jenkins lts.H.Use jenkins blue image instead
 Script sample: https://dzone.com/articles/building-docker-images-to-docker-hub-using-jenkins
-GIT hiub access token for BlueOCean: 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
+GIT hiub access token for BlueOCean: xxxxx
  
 (1) Popular CI tool 
 (2) Allows us to build pipelines for runnign unit tests, code qulaity checks, packae your app, integration tests and deploy 
@@ -105,7 +105,7 @@ jenkins    | xxxx
 						- Repositories :
 							- Repository url= https://github.com/SonyMC/jenkins-devops-microservice
 							- Credentials= is a public repo so no need fro credentials 
-							Access token: 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
+							Access token: xxxx
 							- branch specifier = */main
 								- Note: Normally we configure */master but we have created main branch instead of master
 							- Script path= Jenkinsfile( thsi is specified in D:\OneDrive\Study\DevOps\devops-master-class-master\jenkins-devops-microservice
