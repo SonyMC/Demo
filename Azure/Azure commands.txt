@@ -1,0 +1,42 @@
+(1) Install Azure cli for windows : https://docs.microsoft.com/en-us/cli/azure/install-azure-cli
+
+(2) Login to Azure 
+ 	- cmd: az login
+	- thsi will gove details of the subscription includinfg subscription id
+
+(3)  subscription id : xxxx
+
+(4) Create a service account:will create client id and client secret which is what we will be using to run cmds from azure devops ui.
+	- cmd:	az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/subscription id value" 
+	E.g: az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/xxxx
+
+{
+  "appId": ",  -> client_id 
+  "displayName": "",
+  "name": "",
+  "password": "client_secret
+  "tenant": ""
+}
+
+
+
+(5) Create a ssh public key( public/private rsa key pair.):
+
+	
+	- cmd: 
+	ssh-keygen -m PEM -t rsa -b 4096 
+	- # PEM - Privacy Enhanced Mail - Certificate Format
+	    RSA- Encryption Algorithm
+	   4096 - Strength of RSA 	
+	
+	- key file name : azure_rsa
+	- Two file will be geenrated in C:\Users\mails: 
+		- azure_rsa
+		- azure_rsa.pub	 
+	
+
+(6) Connect to the kubernetes cluster( after thsi we can run kubectl cmds)
+	- cmd: az login	
+	- cmd: az aks get-credentials --name kubernetes_cluster_name --resource-group xxxx
+	- E.g. az aks get-credentials --name k8stest_dev --resource-group kubernetes_dev
+	/ cmd: kubectl get svc

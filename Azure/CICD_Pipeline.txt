@@ -1,0 +1,223 @@
+(1) Github repo: https://github.com/SonyMC/azure-devops-kubernetes-terraform-pipeline.git:	
+	- Repo name: azure-devops-kubernetes-terraform-pipeline
+	- Now create a local directory with same name: D:\OneDrive\Study\DevOps\devops-master-class-master\azure-devops-kubernetes-terraform-pipeline:
+		- Will contain code for currency-exchange microservice 
+		- cmd is the code is not committed ot github repo:
+			- git add *
+			- git add .gtignore
+			- git commit -m 'first commit"
+			- git remote add origin  https://github.com/SonyMC/azure-devops-kubernetes-terraform-pipeline.git
+			- git push -u origin master
+	
+
+(2) Multi Stage Pipelines is automatically enabled in Azure
+
+(3) Search for Azure Devops : https://azure.microsoft.com/en-in/services/devops/
+
+(4) Was earlier known as VSTS ( Visual Studio Team Services)
+
+(5) Structure:
+	- project: mailsonymathew
+		- Projects: azure-devops-kubernetes-terraform
+
+(6) Enable Multi stage pipeline via preview options: 
+	- Note: Now it is automaticlly enabled
+	- Click on name icon (SM) - User Settings -> Preview Features -> Enable multi stage pipeline
+		- option - privage
+
+(7) Pipelines:
+	- New Pipeline:
+		- Where is your code: GitHub ( subversion is also an option)
+		- Since I have already created pipelines using github, it wil lshow a list of repos. Else it will ask e for github credentials
+		- Select our repo: azure-devops-kubernetes-terraform-pipeline
+		- Configure your pipeline:
+			- Azure automatically detects the dockerfile present in the repo and auto sufggests Docker as one of teh options
+			- For now let us choose starter pipeline:
+				- Rename yaml script : 01-first-azure-pipeline-copy.yml
+				- Save and run :
+					- Commit mesage: 01-first-azure-pipeline-copy
+					- Commit directly to master branch
+					- Job is queued
+					- Check out commit in github repo azure-devops-kubernetes-terraform-pipeline
+					- Pipeline Job si success -> Clicking on teh job will show all steps that were doen to make teh job run
+					- To see entire job log: Click on job -> View raw log
+
+
+
+	- Click on pipelines to view our pipeline and run details:
+		- Select our pipeline  and if required run again using 'Run pipelien option'
+
+
+	- Go to our local git hub repo and do a pull:
+		- cd D:\OneDrive\Study\DevOps\devops-master-class-master\azure-devops-kubernetes-terraform-pipeline
+		- cmd: git pull
+		- will pull  01-first-azure-pipeline-copy.yml inot our local repo
+		- open folder with visual code
+		- Edit changes and push back to Github: 
+			- git add *
+			- git commit-m "revised"
+			- git push -u origin master 
+
+		- The push will auto trigger the run of the pipeline in Github	
+		- If you do not want teh pipelien to be auto run:
+				- pipeline-> 3 vertical dots -> settings -> disable
+
+		Note: You can also start runs by directly editnag and saving teh .yml fiel in teh pipeline
+
+
+(8) Pipeline variables:
+		- in google search for 'pipeline variables azure devops' : 
+			- https://docs.microsoft.com/en-us/azure/devops/pipelines/build/variables?view=azure-devops&tabs=yaml
+		 	- will show list of pre-configured pipeline variables 
+
+		- Customized variables:
+			- 'PipelineLevelVariable' using the 'Variables' button in the top right hand corner
+          		-  Variables following PipelineVariable are pre-defined variables.
+
+(9) Copy files option:
+	- Click on show assistant icon 
+	- Use Task Assistant at the right hand side to search for copy files option. 
+	- Place the cursor excalty where you want the script to be added. The cursor should align with beginning of '-bash'. Use tab to align.
+	- Source Folder: $(System.DefaultWorkingDirectory)
+	- Contents : **/*.yaml  
+		     **/*.tf	
+	- Target Folder: $(Build.ArtifactStagingDirectory)			 
+
+	- Recursively list contenets of Target Folder: $(Build.ArtifactStagingDirectory): bash: ls -R $(Build.ArtifactStagingDirectory) 
+
+(10)Publish Artefact : Use this from Task assistant. We will need to publish artefact if we want to share something between stages.
+	- Click on show assistant icon 
+	- Use Task Assistant at the right hand side to search for publish -> publish build artefacts
+	- - Place the cursor excalty where you want the script to be added. The cursor should align with beginning of 'previosu copy file task. Use tab to align.
+	- Path to publish: $(Build.ArtifactStagingDirectory)
+	- Artefact name: drop 
+	- Artifact publish location: Azure Pipelines
+	- After a couple of minites, click on First Job -> link wil be available for 1 artifact
+
+(11) Execute task on 2 different OS( aka agents0)
+	- Add strategy to a job:
+# strategy:
+#   matrix:
+#     linux:
+#       operatingSystem: 'ubuntu-latest'
+#     mac:
+#       operatingSystem: 'macos-latest'
+
+(12) Deployments & Environments:
+	- Use yaml '02-understanding-stages.yml'
+	- You can see teh 'Environments' tab( beide 'Summary tab') in the pipeline whicl executign teh job
+	- Configure approval in teh QA env:
+		- Pipeline-> Environments-> View Environment-> 3 dots-> Approvals and checks -> Approvals-> add user ( my email id) 
+	- Run the pipeline: it will show QA pending approval and email will eb trigerred to uapprover
+		- Approver needs to click on review-> approve for abuild to complete
+
+(13) Build and Push Docker Image to Docker hub :
+	- Docker file is present in the git repo : azure-devops-kubernetes-terraform-pipeline
+	- The pipeline script will refer to thsi docker file for building the image 
+	- Objective: 
+		- Whenever something is changed in teh sounrce code in the repo, a new image should automatically eb build and puched to dockerhub
+	- Create a connection to Dockerhub:
+		- Project settings -> Service connections-> New service connection-> Docker registry-> Registry type= Docker hub;
+			- Enter your dokcer id and pwd
+			- Connection name= mailsonymathew-dockerHub  ( thsi wil be used as teh container registry)
+			- Grant access permissions to all pipelines
+			- Verify & save 
+	- Pipeline -> new pipeline
+		: Code-repository: Github-> choose repo 
+		: Configure your pipeline: Docker( build a dDocker image) :
+			- Dockerfile: $(Build.SourcesDirectory)/Dockerfile  (thsi is thr path to our docker file present in the root folder of the Source Directory) - Validat eand configure
+			- Click settings on the geenrated script and configure container repository: 
+				- Container registry = mailsonymathew-dockerHub
+				- Container repository = mailsonymathew/currency-exchange-devops ( Note: if this repo is not avialable in Docker hub it wil be created, else an iamge will be pushed with new tag)
+				- Scroll down to command: Select buildAndPush
+				- Add  
+			
+(14) Releases:
+	- Refer 03-playing-with-environment-deployment.yml
+	- Build pipeline: 
+		- build artefacts and makeit available for release pipeline  
+		- enable 03-playing-with-environment-deployment.yml
+	- Release pipeline: 
+		- new feature	
+		- pick up artefacts published in build and make it avialable in each env
+		- Alternative: you can have multiple stages in build pipeline having both build and deployment
+		- Releases -> new pipeline:
+			- Select a template:
+				- Select Empty job tempalte( we will look at deplying to k8s cluster later)
+				- Click on Add an artifact icon:
+					- Source type = Build ( can also be Docker registry, Azure container etc.) 
+					- Project = azure-devops-kubernetes-terraform-copy
+					- Build pipeline= SonyMC.azure-devops-kubernetes-terraform-pipeline (1)
+					- Add
+					- For demo we will just list teh artefacts in the release pipelines
+				- Click on Schedule icon:
+					- Option 1: Enable and specify release schedule  
+					- Option 2: Disable and click on Lightning icon for Continous deployment trigger;
+						- Enable continous deployment trigger :
+							- Will create a release everytime a new build is available 
+						- Disable: 
+							- Pull request trigger 
+				- Click on Save: 
+					- Folder= \release
+				- Click on + icon below the stage icon to add a new stage:
+					- Template= empty job
+					- Stage name= DEV
+					- Save
+				- Select Stage 'DEV' and click on 'tasks' tab at teh top:
+					- Agent Job -> Click on + -> Search for BASH-> Add BASh script 
+					- Bash Script:
+						- Display names= ListFiles
+						- Select inline
+						- google search: release variables azure devops: https://docs.microsoft.com/en-us/azure/devops/pipelines/release/variables?view=azure-devops&tabs=batch	
+				 		- Script:
+						ls -R $(System.ArtifactsDirectory)
+				- Save
+				- Rename pipeline: List-Files-Release-Pipeline
+				- Save
+				-Optional:  Pre-Deployment conditions:
+					- Can be used to configure approvals and quality checks
+					- Seelct trigger type : After Release or Manual only
+					- Configure any pre-deployment approvals
+					- Confgure Gates for QA checks	
+					- Pipeline-> Click on Pre-Deployment conditions icn within the Dev Stage icon
+						
+				- Click Create Release 
+					- Create
+				- Click on Release-1 link:
+					- job fails because we have specified windows agent in task 
+					- click on edit pipeline-> Agaent job-> Agent specification-> select buntu-16.0.4
+					- save
+				- Create Release-> create
+				- Click on Relrease-2 link
+					- DEV job has now succeeded
+						- Files can be seen in List Files step
+				- Create new stage: 
+					- Pipeline-> Edit-> Edit pipeline-> Click on clone icon below the DEV Stage
+						- Click on copy of DeV-> Stage name= QA-> save
+						- Click pre-deployment condition icon on teh QA stage bubble:
+							- Trigger: After Stage 
+								- Stages: DEV
+							- Enable pre-deployment approval:
+								- enter approver name or email id
+							- Save 
+				- Trigger release from pipeline:
+					- Go to pipelinees:
+						-SonyMC.azure-devops-kubernetes-terraform-pipeline (1) -> run new
+						- you can observe relese pipelien beeing trigeered :
+							- will wait for QA approval
+							  
+ 
+				- Variables:
+					- In release pipeline you can create variables and set different scopes ( RELEASE, DEV, QA) 
+					- Releases-> Variable tab
+					- can be used for dev specific , QA specific configurations
+			 
+	 
+ 
+(8) Visual Studio Code:
+		- Open folder : D:\OneDrive\Study\DevOps\devops-master-class-master\azure-devops-kubernetes-terraform-pipeline
+
+
+
+
+	

@@ -1,0 +1,180 @@
+Azure DEVOPS, Azure AKS with Terraform 
+----------------------------------------
+
+
+(1) Github local repo : D:\OneDrive\Study\DevOps\devops-master-class-master\azure-devops-kubernetes-terraform-pipeline
+
+(2) Github repo: https://github.com/SonyMC/azure-devops-kubernetes-terraform-pipeline.git
+
+(3) Docker hub repo for currency-exchange: mailsonymathew/currency-exchange-devops
+
+(4)Objectives: 
+	- Pipeline 1: Create K8 cluster in Azure 
+	- Pipeline 2: Deploy currency-exchange ms as a container into the K8s cluster
+
+(5)Pipeline1 : Create K8 cluster in Azure usin the IAAC files in :
+-----------------------------------------------------------------
+
+	- Service connectiosn needed:
+		- GITHUB : SonyMC
+		- Azure:azure-resource-manager-service-connection	
+	- IAAC Core repo: D:\OneDrive\Study\DevOps\devops-smaster-class-master\azure-devops-kubernetes-terraform-pipeline\configuration\iaac\azure\kubernetes
+	- Refer : 05-azure-kubernetes-cluster-iaac-pipeline.yml
+	- 3 terraform files being referred to in location: D:\OneDrive\Study\DevOps\devops-master-class-master\azure-devops-kubernetes-terraform-pipeline\configuration\iaac\azure\kubernetes
+		- (1) main.tf
+			- we are provisioning a azurerm_kubernetes_cluster:
+				- google this ;https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/kubernetes_cluster
+				- this helps us to manage a managed k8s cluster( AKS)	
+				- First thing to create would be a resounrce group ( all resounrces in Azure are associated to a rg)
+					- Name of rg is appended with environment. Hence if we use teh same Azure account for different environments, we can configure a environment variable ( refer variable.tf) 
+					- location is also specified as a vriable( variable.tf)		
+					 
+				- Then create a K8S cluster which is associated with that resounrce group 
+					- Name of cluster is appended with env
+					- location is same as rg
+					- dns prefix: needs to be prefixed
+				- Specify admin user name:"ubuntu"
+				- Specify a public SSH key to be associated with teh cluster
+				- Default node pool associated with cluster
+					- name= "agentpool"
+					- node count = specified as variable in variabels.tf 	
+					- vm-size+ "Standard_DS1_v2' ( will give 1 cpu with about 3.5 gb of mem) 
+				- Service principle: 
+					- Needed to talk to Azure
+					- will require client_id and client_secret whch we wil setup.
+				- Tags: 
+					- configure a tag
+				- Backend configuration: 
+					- Very important as we do not want to store the state in our local system 
+					- This is because each time the pipeline is kicked off, a different agent will be running.Hence there will be no concept of a local state.
+					- In Azure we wil create:
+						-  Storage account
+						-  Storage account container 
+						- The state will be stored in the the Storage account container 
+					- In the tf script thsi is commented out because we will configure thsi when we configure terraform in Azure Devops 
+				 
+		- (2) variables.tf
+				- client_id, client_secret, ssh_public_key
+					- No values configured for client_id, client_secret and ssh_public_key:
+					- This will be configured in Azure Devops
+						- client_id, client_secret:
+							- Install Azure cli
+							- https://docs.microsoft.com/en-us/cli/azure/install-azure-cli 
+							- open cmd line
+							- cmd: refer Azure commands doc
+								- az login:
+									- subscription id : id": "cab51fa7-6e0c-40e0-a5cf-83b1def2d3ca"
+									- use subscription id to create client id & client secret:
+										- refer Azure cmds doc
+							- create SSH public key:
+								- refer Azure commands doc
+								- ssh-keygen -m PEM -t rsa -b 4096
+					- 
+				- environment, location, node_count, dns_prefix, clustername and resource_group have the values provided
+
+
+		- (3) output.tf
+			- used to print out details of the k8s cluster
+
+
+	- Create Azure connection for pipeline:
+		- Pipelines-> Project Settings-> Service Connections->new Connection -> Azure Resource Manager
+		- Service-Principal=automatic
+		- connection name= azure-resource-manager-service-connection
+		- scope lovel = subscription
+		- subscription= select( pay-as-you-go)
+		- Resounce Group = do not select 
+
+ 	- Install Terraform plugins:
+		- Terraform 1 (https://marketplace.visualstudio.com/items?itemName=ms-devlabs.custom-terraform-tasks)
+		- Terraform 2 (https://marketplace.visualstudio.com/items?itemName=charleszipp.azure-pipelines-tasks-terraform
+		- Download both extensions using your account name
+
+	
+
+	- New pipeline:
+		- Project: azure-devops-kubernetes-terraform-copy
+		- Pipelines-> new pipline:
+			- Refer tf script: 05-azure-kubernetes-cluster-iaac-pipeline.yml
+			- Select code repo : Github-> azure-devops-kubernetes-terraform-pipeline
+			- Starter pipeline
+			- Build pipeline using task assistant:
+				- default wrking directory maps to teh Github repo azure-devops-kubernetes-terraform-pipeline
+				- However our iaac terraform files are in teh path within teh repo: azure-devops-kubernetes-terraform-pipeline/configuration/iaac/azure/kubernetes/
+					- hence the configuration directory will be :$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes
+				- create client id and client secret( refer azure cmds)
+					- configure thsi using variables button in pipeline
+						- client_id  ( refer azure cmds to get this value)
+						- client_secret( refer azure cmds to get this value)
+				
+				- Copy public secret key(azure-rsa.pub) :
+    						- # The ssh_public_key values are configured using the library
+							- Click on library tab to open in new window -> Secure files-> Add secure files-> upload azure_rsa.pub in D:\OneDrive\Study\DevOps\Azure\RSA_SSH_KEY_PAIR
+						- task= download secure file
+						- secure-file= azure_rsa.pub
+						# Download public key file using task assistant( download secure file)
+						# We have named the file 'publickey' which is used as one of the variables in command options below	
+					- Backend tyepe= azurerm
+					- Command Options= -var client_id=$(client_id) -var client_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilePath)
+				- Initialize cluster( i.e. create backend resounrce group)
+					- ***** Service connection= azure-resource-manager-service-connection
+					- Enable Create Backend if not exists
+					- Resource Group name:
+						- Though we have specified a RG name in teh iaac tf script , we will use a different rg name for backend:
+    					-backendAzureRmResourceGroupName: 'terraform-resource-group'
+    					-backendAzureRmResourceGroupLocation: 'westeurope'
+    					-backendAzureRmStorageAccountName: 'storageaccmailsonymathew'
+    					-backendAzureRmContainerName: 'storageaccmailsonymathewcontainer'
+    					-backendAzureRmKey: 'kubernetes-dev.tfstat'
+				- Save and run -> wil ask for permission to use azure-rsa.pb
+				- After successful run -> Go tto main Azure portal(https://portal.azure.com/?quickstart=True#blade/HubsExtension/BrowseResourceGroups)-> search for resounrce groups-> click on terraform-resource-group
+
+				- Create the k8s cluster using teh iaac script in $(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes :
+
+					- Comment out the commandOption in init step above as it is not required there
+					- copy-paste teh entire init step and make changes ( change command:'init' to command: 'apply', copy service connection name, command options and delete everything else)
+					- save and run
+					- Azure main portal: https://portal.azure.com/?quickstart=True#blade/HubsExtension/BrowseResourceGroups
+						- Resounrce Group -> new rg -> kubernetes_dev ( The name is defiend in iaac tf files)
+
+				-Connect to the kubernetes cluster( after thsi we can run kubectl cmds)
+					- cmd: az aks get-credentials --name kubernetes_cluster_name --resource-group xxxx
+						- E.g. az aks get-credentials --name k8stest_dev --resource-group kubernetes_dev
+				- cmd: kbectl get svc	
+					- verify you can see one kubernetes base service running
+
+
+- Pipeline 2: Deploy currency-exchange ms as a container into the K8s cluster( will use deployment.yml to deploy against our k8s cluter) 
+------------------------------------------------------------------------------
+	- **** New k8s service connection: 
+		- kubernetes:
+			- Azure subscription 
+			- Cluster: k8stest_dev(kubernetes_dev)
+			- namesapce= default
+			- Name= azure-kubernetes-connection
+	-***** New Docker hub service connection:
+			- Docker Hub
+			- Docker ID= mailsonymathew
+			- pwd;
+			- Connection name= mailsonymathew-dockerHub
+			
+	- Pipelines-> new pipelines
+		- Select code repo : Github-> azure-devops-kubernetes-terraform-pipeline
+		- starter piepline: Refer 06-azure-kubernetes-ci-cd-pipelines.yml
+		- steps are detailed in yml file
+		- The deployment.yml file can be found in D:\OneDrive\Study\DevOps\devops-master-class-master\azure-devops-kubernetes-terraform-pipeline\configuration\kubernetes
+
+		- Do not forget to destroy ( run the 05-azure-kubernetes-cluster-iaac-pipeline.yml -> disabel pipeile-> comment out destroy section
+			- Note: before thsi do a :
+				= cmd:kubectl get rs -o wide
+				= cmd: kubectl delete all -l app=currency-exchange
+
+	- After successful pipeline run:
+		. cmd: kubectl get po:
+			- verify pods haven been successfully created
+		- cmd: kubectl get scv:
+			- get external ip  
+		- url:external-ip:8000/currency-exchange/from/USD/to/INR
+		: E.g: 23.97.225.175:8000/currency-exchange/from/USD/to/INR
+		20.73.155.71:8000/currency-exchange/from/USD/to/INR
+		 		

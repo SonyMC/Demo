@@ -1,0 +1,121 @@
+(1) Refer:https://azuredevopslabs.com/labs/vstsextend/Jenkins/
+	 :https://www.youtube.com/watch?v=OTtpQExq7q8
+
+
+(2) There are two ways to integrate Jenkins with Azure Pipelines:
+
+	- One way is to run CI jobs in Jenkins separately. This involves the configuration of a CI pipeline in Jenkins and a webhook in Azure DevOps that invokes the CI process when source code is pushed to a repository or a branch.
+
+	- The alternate way is to wrap a Jenkins CI job inside an Azure pipeline. In this approach, a build definition will be configured in Azure Pipelines to use the Jenkins tasks to invoke a CI job in Jenkins, download and publish the artifacts produced by Jenkins.  
+
+
+(3) This lab covers both the approaches and the following tasks will be performed
+
+-Provision Jenkins on Azure VM using the Jenkins template available on the Azure Marketplace
+-Configure Jenkins to work with Maven and Azure DevOps
+-Create a build job in Jenkins
+-Configure Azure Pipeline to integrate with Jenkins
+-Configure a CD pipeline in the Azure Pipelines to deploy the build artifacts
+
+(4) Resources: 
+	- MS Azure account :https://azure.microsoft.com/en-us/free/
+	- Putty -  a free SSH and Telnet client	
+	- GITHUB: repo used :  https://github.com/SonyMC/jenkins-azure-devops-microservice-1
+	- local project folder: D:\OneDrive\Study\DevOps\devops-master-class-master\jenkins-azure-devops-microservice-1 project folder: 
+
+(5) Initial step:Provision Jenkins on Azure VM using the Jenkins template available on the Azure Marketplace: 	
+	- Setup  up the Jenkins  VM:
+		-  Jenkins VM image available on the Azure Marketplace will be used. 	
+		- This will install the latest stable Jenkins version on an Ubuntu Linux VM along with the tools and plugins configured to work with the Azure
+		-  https://azuredevopslabs.com/labs/vstsextend/Jenkins/ ->Click on deploy to Azure :
+			- Create:
+				- Subscription: default
+				- Resource Group : Create new-> name= JenkinsResourceGroup
+				- Virtual Machine Name: jenkinsVM
+				- Region: Central US
+				- Image: Jenkins packaged by Bitnami- gen1
+				- Authentication type:
+					- select password:
+						- Username: mailsonymathew
+						- password:Legendary@27
+				-Disks: Standard SSD
+				-Networking: default
+				-Management: Default
+				-Advanced: default
+				-tags:
+		- Pricing : thsi is not viable so dropping teh dmo!!!
+
+	-Once the Jenkins VM is provisioned, navigate to the VM’s overview page and make a note of the public IP address. This information will be required to connect to the Jenkins VM from Putty
+
+
+
+(6) Follow steps till 9 to do a package and archive the project:
+		- In Jenkins file take till Package stage
+		- To do : 	Add archive step using snippets
+
+
+(7) Refer https://azuredevopslabs.com/labs/vstsextend/Jenkins/#preparing-jenkins-machine-to-use-service-hook-in-azure-devops for 
+	- Preparing Jenkins machine to use service hook in Azure DevOps
+	-Approach 1: Triggering the CI via a service hook in Azure DevOps
+	-Approach 2: Wrapping Jenkin in Azure
+
+
+--------------------------------------------------------------------
+
+Alternate attempt:
+
+With existing Jenkins, push out a aeparate repo in GIT which whicll trigger the Azure CICD build:
+
+ - Start docker desktop
+
+(1) Spin up Jenkins blueocean container: refer Jenkins setup document
+eee8dfe6c10640c0b5a6a1f76bf9a12c
+-url: localhost:8081
+
+(2) GIT repo 1: https://github.com/SonyMC/jenkins-azure-devops-kubernetes-terraform-pipeline-1.git
+	
+(3) Git repo 2: https://github.com/SonyMC/jenkins-azure-devops-kubernetes-terraform-pipeline-2.git
+
+(4) project folder: D:\OneDrive\Study\DevOps\devops-master-class-master\jenkins-azure-devops-kubernetes-terraform-pipeline-1
+
+(5) Docker hub registry used: mailsonymathew/currency-exchange-devops
+
+(5) Script reference: https://www.jenkins.io/doc/pipeline/steps/
+
+(6) Jekninsfile: D:\OneDrive\Study\DevOps\devops-master-class-master\jenkins-azure-devops-microservice-1
+
+(7) Add GIT  credentials:
+		- Geenrate personal access token in GITHUB:
+			- Settings-> Developer settings-> Personal Access tokens
+			- This will eb genrated the first time when we try toconnect to our repo through Jenkins
+			- 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
+			- Valid till Sep 28, 2021
+
+		- Maange Jenkins-> Manage Credentials-> Jenkins-> Global Creentials-> Add Credential-> 
+			- Username:SonyMC
+			- Password: *** Use the personal access token value
+			- iD: GitHub
+
+
+(8) CI on Jenkins:
+	- Create Pipeline-> Github-> repo=jenkins-azure-devops-kubernetes-terraform-pipeline-1
+
+	- Thsi will push code to to GIT repo https://github.com/SonyMC/jenkins-azure-devops-kubernetes-terraform-pipeline-2.git
+
+(9) CD on Azure pipeline:
+		
+	- Steps:
+		- Run IAAC Pipeline to provision K8S cluster
+		- Configure AZURE pipeline to listen to poll repo  https://github.com/SonyMC/jenkins-azure-devops-kubernetes-terraform-pipeline-2.git
+		- Any changes to it will automatically build image, push image and deploy to K8S cluster
+
+(3) Run IAAC pipline to create cluster:
+		- IAAC Core repo: D:\OneDrive\Study\DevOps\devops-master-class-master\jenkins-azure-devops-kubernetes-terraform-pipeline-1\configuration\iaac\azure\kubernetes
+		- Git Repo for IAAC : SonyMC/jenkins-azure-devops-kubernetes-terraform-pipeline-2
+
+		- Refer Azure_K8s_cluster doc
+
+		
+			
+	
+				 			 			 	

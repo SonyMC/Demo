@@ -1,0 +1,21 @@
+- is  BDD - Behavious Driven Developmetn tool used for integration tests
+- tests are written in given , when , then forma t- gwt format
+- Go to Test Resources: 
+	- D:\OneDrive\Study\DevOps\devops-master-class-master\jenkins\currency-exchange-microservice\src\test\resources
+	- cucum.feature"
+		- Given a String name, when say hello method is called, then it shoudl return...
+			- HelloWorldSteps.java is used to proces the above:
+		- Similarly we have CurrencyExchangeSteps.java
+			- CurrencyExchange steps is where the process is defined
+			- Framework used:
+				- Rest assured
+
+		- RunCucumberIntegrationTestCase.java:
+			- runs teh integration tests
+	= POM.xml:
+		-failsafe plugin:
+			- run integration test 
+			- configured to run with any test case endign with *CucumberIntegrationTestCase.java
+		- surefire plugin:
+			- run unit test		 
+				
