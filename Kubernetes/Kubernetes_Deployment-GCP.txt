@@ -35,7 +35,7 @@
 	- cmd: kubectl version 
 
 
-(10) Install gcloud
+(10) Install gcloud( https://cloud.google.com/sdk/docs/install)
 	- Open Google Cloud SDK Shell:
 		- cmd: gcloud init 
 		- project id: xxxx project id can be found by clicking project name)
