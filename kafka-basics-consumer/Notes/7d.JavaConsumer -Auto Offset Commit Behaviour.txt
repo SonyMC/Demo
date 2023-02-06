@@ -1,0 +1,35 @@
+
+Java Consumer- Auto Offset Commit Behaviour
+-------------------------------------------
+
+
+
+
+- In the Java Consumer API, offsets are regularly committed
+- Enable at-least once reading scenario by default( undr conditions)
+- Offests are committed when you call .poll() and auto.commit.interval.ms has elapsed
+- E.g.: auto.commit.interval.ms=5000 and enable.auto.commit=true will commit every 5 seconds
+- Make sure messages are all successfully processed before you cal lpoll() again
+	- If you don;t, you will not be in at-least-once 	reading scenario
+	- In that(rare) case,you must disable enable.auto.commit, and most likely most process to a separate thread, and then from time to time call .commitSync() or .commitAsync() with teh correct offsets manually( advanced) 
+	  
+
+
+
+			
+
+
+
+
+
+- ConsumerDemoWithShutdown.java:
+		- Right click -> Run ConsumerDemoCooperative.main()
+		
+
+				- From logs you can see 
+					- auto.commit.interval.ms=5000
+					- enable.auto.commit=true
+
+********************
+
+T

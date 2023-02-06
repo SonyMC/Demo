@@ -1,0 +1,16 @@
+
+Java Consumer- Consumer Groups and Partion Rebalancing
+---------------------------------------------------------
+
+
+
+
+
+
+
+Class 'ConsumerDemoCooperative.java':
+			- Refer code for documentation
+			
+
+
+

@@ -1,0 +1,44 @@
+
+Java Consumer
+-----------------------------
+
+
+
+
+
+Class 'ConsumerDemoWithShutdown.java':
+			- Refer code for documentation
+			
+
+
+
+
+
+Run the code
+-------------
+
+
+
+- - Project : kafka-basics
+
+
+
+- ConsumerDemoWithShutdown.java:
+		- Right click -> Run ConsumerDemoWithShutdown.main()
+		
+
+				- Code will keep on running
+				- Data consumed will be shown from beginning across all partitions
+				- You can produce more data by running 'ProducerDemoWithKeys.java'
+				- If you restart the applicaiton, data will be consumed from the latest committed offset and not from the beginning 
+				- Exit teh application:
+					- Return code wil lnow be '1'
+					- In IntelIj console log you can see:
+						- [Thread-0] INFO ConsumerDemoWithShutdown - Detected a shutdown, let's exit by calling consumer.wakeup()..
+						-  msg: 'main] INFO ConsumerDemoWithShutdown - The consumer is now gracefully closed'
+
+
+
+
+
+
